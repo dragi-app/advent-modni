@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Колесо фортуни Modni Flow</title>
+    <style>
+        /* Basic reset */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Global body styling with animated gradient background */
+        body {
+            font-family: sans-serif;
+            overflow-x: hidden;
+            min-height: 100vh;
+            color: #333;
+        }
+
+        /* Animate background colours to give the page some life */
+        .gradient-bg {
+            background: linear-gradient(45deg, #f5f7fa, #c3cfe2, #f7cac9, #92a8d1);
+            background-size: 800% 800%;
+            animation: gradientAnimation 15s ease infinite alternate;
+        }
+
+        @keyframes gradientAnimation {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Screens are flex containers centred on content */
+        .start-screen,
+        .wheel-screen {
+            min-height: 100vh;
+            width: 100%;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            /* provide padding so content isn’t flush against the viewport edges */
+            padding: 40px 20px;
+            box-sizing: border-box;
+        }
+
+        /* Show the start screen by default */
+        #startScreen {
+            display: flex;
+        }
+
+        /* Logo on both screens */
+        .logo {
+            width: 240px;
+            height: auto;
+            margin-bottom: 20px;
+            /* Adjust horizontal positioning: shift slightly left so that the centre of the
+               text portion aligns better beneath the pointer.  The hat icon on the right
+               introduces extra width, so a small negative shift re‑centres the logo. */
+            transform: translateX(-2%);
+        }
+
+        /* Headings on the start screen */
+        .start-screen h1 {
+            font-size: 2.2rem;
+            margin-bottom: 8px;
+            color: #ffffff;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        .start-screen .subtitle {
+            font-size: 1.4rem;
+            margin-bottom: 20px;
+            color: #ffffff;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        /* Product slider styling */
+        .product-slider {
+            width: 100%;
+            max-width: 1100px;
+            overflow: hidden;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+
+        .product-row {
+            display: flex;
+            align-items: stretch;
+            /* Scroll the row left and right automatically */
+            animation: scrollRow 30s linear infinite alternate;
+        }
+        /* Move the row back and forth by half its width to create an endless loop */
+        @keyframes scrollRow {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        /* Responsive adjustments for smaller screens */
+        @media (max-width: 768px) {
+            /* Reduce logo size on mobile */
+            .logo {
+                width: 180px;
+                margin-bottom: 15px;
+            }
+            .start-screen h1 {
+                font-size: 1.8rem;
+            }
+            .start-screen .subtitle {
+                font-size: 1.1rem;
+            }
+            /* Display fewer cards at once and allow them to be wider */
+            .product-card {
+                width: 70%;
+                margin: 0 10px;
+            }
+            .product-card img {
+                height: 160px;
+            }
+            .product-card .info .name {
+                font-size: 0.85rem;
+            }
+            .product-card .info .price {
+                font-size: 0.8rem;
+            }
+            .product-card .info .sizes {
+                font-size: 0.75rem;
+            }
+            /* Wheel container smaller on mobile */
+            .wheel-container {
+                width: 280px;
+                height: 280px;
+            }
+            /* Adjust icons sizes within the wheel */
+            .prize-icon {
+                width: 36px;
+                height: 36px;
+                margin-top: -18px;
+                margin-left: -18px;
+                font-size: 22px;
+            }
+            /* Smaller pointer for mobile */
+            .pointer {
+                border-left-width: 15px;
+                border-right-width: 15px;
+                border-top-width: 30px;
+                margin-left: -15px;
+                bottom: -15px;
+            }
+            .spin-btn {
+                margin-top: 30px;
+                padding: 10px 20px;
+                font-size: 0.9rem;
+            }
+        }
+
+        .product-card {
+            flex: 0 0 auto;
+            width: 220px;
+            margin: 0 10px;
+            background: rgba(255, 255, 255, 0.85);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            color: #333;
+        }
+
+        .product-card img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            display: block;
+        }
+        .product-card .info {
+            padding: 10px;
+        }
+        .product-card .info .name {
+            font-size: 0.9rem;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        .product-card .info .price {
+            font-size: 0.85rem;
+            margin-bottom: 4px;
+            color: #e91e63;
+        }
+        .product-card .info .sizes {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        /* Call to action button on start screen */
+        .cta-btn {
+            margin-top: 25px;
+            padding: 14px 28px;
+            background-color: #673ab7;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            transition: background-color 0.3s;
+        }
+        .cta-btn:hover {
+            background-color: #512da8;
+        }
+
+        /* Wheel screen styling */
+        .wheel-screen header {
+            /* Raise the logo slightly by reducing top margin and increasing bottom margin to give the pointer room. */
+            margin-top: 0;
+            margin-bottom: 100px;
+        }
+        .wheel-screen header img {
+            width: 240px;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+            /* Adjust horizontal positioning on the wheel screen: shift slightly left to account
+               for the extra width of the hat.  This keeps the text portion centred relative
+               to the pointer. */
+            transform: translateX(-2%);
+        }
+
+        .wheel-container {
+            position: relative;
+            width: 340px;
+            height: 340px;
+        }
+
+        .wheel {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 8px solid #fff;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            transition: transform 5s cubic-bezier(0.33, 1, 0.68, 1);
+            /* Colours correspond to each segment */
+            background: conic-gradient(
+                #f44336 0deg 60deg,
+                #ff9800 60deg 120deg,
+                #ffeb3b 120deg 180deg,
+                #4caf50 180deg 240deg,
+                #2196f3 240deg 300deg,
+                #9c27b0 300deg 360deg
+            );
+        }
+
+        /* Icons or text on the wheel */
+        .prize-icon {
+            position: absolute;
+            width: 48px;
+            height: 48px;
+            top: 50%;
+            left: 50%;
+            margin-top: -24px;
+            margin-left: -24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            color: #fff;
+        }
+        /* Position each icon at the correct angle */
+        .icon1 { transform: rotate(30deg) translate(0, -130px) rotate(-30deg); }
+        .icon2 { transform: rotate(90deg) translate(0, -130px) rotate(-90deg); }
+        .icon3 { transform: rotate(150deg) translate(0, -130px) rotate(-150deg); }
+        .icon4 { transform: rotate(210deg) translate(0, -130px) rotate(-210deg); }
+        .icon5 { transform: rotate(270deg) translate(0, -130px) rotate(-270deg); }
+        .icon6 { transform: rotate(330deg) translate(0, -130px) rotate(-330deg); }
+
+        /* Pointer positioned above the wheel and pointing downwards */
+        .pointer {
+            position: absolute;
+            left: 50%;
+            /* Place the pointer above the wheel; using negative top to sit just above the border */
+            top: -40px;
+            width: 0;
+            height: 0;
+            /* Create a downward‑facing triangle: colour on the top border creates a point at the bottom */
+            border-left: 20px solid transparent;
+            border-right: 20px solid transparent;
+            border-top: 40px solid #333;
+            margin-left: -20px;
+        }
+
+        .spin-btn {
+            margin-top: 40px;
+            padding: 12px 24px;
+            font-size: 1rem;
+            background-color: #673ab7;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transition: background-color 0.3s;
+        }
+        .spin-btn:hover {
+            background-color: #512da8;
+        }
+
+        /* Result overlay styling */
+        .result {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            z-index: 10;
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.4s;
+        }
+        .result.visible {
+            visibility: visible;
+            opacity: 1;
+        }
+        .result .message {
+            background: #ffffff;
+            color: #333;
+            padding: 30px;
+            border-radius: 8px;
+            max-width: 90%;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+        /* Style the prize name */
+        .result .message #resultText {
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        /* Style the note with festive greeting */
+        .result .message #resultNote {
+            white-space: pre-line; /* preserve newline characters */
+            font-size: 1rem;
+            line-height: 1.4;
+            margin-top: 5px;
+            color: #673ab7;
+            font-weight: 500;
+        }
+        .result .message img {
+            width: 64px;
+            height: 64px;
+            display: block;
+            margin: 0 auto 20px auto;
+        }
+        .result .close-btn {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #e91e63;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .result .close-btn:hover {
+            background-color: #ad1457;
+        }
+
+        /* Instagram call‑to‑action styling */
+        .instagram-cta {
+            margin-top: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            text-decoration: none;
+        }
+        .instagram-cta svg {
+            width: 24px;
+            height: 24px;
+            fill: currentColor;
+        }
+        .instagram-cta a {
+            display: inline-flex;
+            align-items: center;
+            color: inherit;
+            text-decoration: none;
+        }
+
+        /* Instagram call‑to‑action styling */
+        .instagram-cta {
+            margin-top: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .instagram-cta a {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            color: inherit;
+        }
+        .instagram-cta svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+        /* Colour overrides for different contexts */
+        .start-screen .instagram-cta {
+            color: #ffffff;
+        }
+        .result .instagram-cta {
+            color: #673ab7;
+        }
+    </style>
+</head>
+<body class="gradient-bg">
+
+    <!-- Start screen with logo, tagline and carousel of products -->
+    <div class="start-screen gradient-bg" id="startScreen">
+        <img src="assets/logo.png" alt="Modni Flow Logo" class="logo">
+        <h1>Only original</h1>
+        <p class="subtitle">Замовляй оригінальне у modni.flow</p>
+        <div class="product-slider">
+            <div class="product-row">
+                <!-- First set of product cards -->
+                <div class="product-card">
+                    <img src="assets/puffer_adidas_black.webp" alt="Пуховик Adidas Originals Puffer Jacket (чорний)">
+                    <div class="info">
+                        <div class="name">Пуховик Adidas Originals Puffer Jacket (чорний)</div>
+                        <div class="price">6200 грн</div>
+                        <div class="sizes">S, M, L</div>
+                    </div>
+                </div>
+                <div class="product-card">
+                    <img src="assets/puffer_adidas_green.webp" alt="Пуховик Adidas Monogram (зелений)">
+                    <div class="info">
+                        <div class="name">Пуховик Adidas Monogram (зелений)</div>
+                        <div class="price">6800 грн</div>
+                        <div class="sizes">S, M, L</div>
+                    </div>
+                </div>
+                <div class="product-card">
+                    <img src="assets/puffer_adidas_grey.webp" alt="Пуховик Adidas Originals 3 in 1 (сіро-чорний)">
+                    <div class="info">
+                        <div class="name">Пуховик Adidas Originals 3 in 1 (сіро-чорний)</div>
+                        <div class="price">6800 грн</div>
+                        <div class="sizes">S, M, L</div>
+                    </div>
+                </div>
+                <div class="product-card">
+                    <img src="assets/puffer_nike_primaloft_black.webp" alt="Пуховик Nike Primaloft (чорний)">
+                    <div class="info">
+                        <div class="name">Пуховик Nike Primaloft (чорний)</div>
+                        <div class="price">8000 грн</div>
+                        <div class="sizes">S, L</div>
+                    </div>
+                </div>
+                <div class="product-card">
+                    <img src="assets/beanie_nike_grey.webp" alt="Шапка Nike Sportswear Fisherman Beanie (сіра)">
+                    <div class="info">
+                        <div class="name">Шапка Nike Sportswear Fisherman Beanie (сіра)</div>
+                        <div class="price">990 грн</div>
+                        <div class="sizes">One Size</div>
+                    </div>
+                </div>
+                <div class="product-card">
+                    <img src="assets/backpack_jordan_lightblue.jpg" alt="Рюкзак Jordan Monogram Light Blue">
+                    <div class="info">
+                        <div class="name">Рюкзак Jordan Monogram Light Blue</div>
+                        <div class="price">5500 грн</div>
+                        <div class="sizes">One Size</div>
+                    </div>
+                </div>
+                <!-- Second set of product cards for continuous scrolling -->
+                <div class="product-card">
+                    <img src="assets/puffer_adidas_black.webp" alt="Пуховик Adidas Originals Puffer Jacket (чорний)">
+                    <div class="info">
+                        <div class="name">Пуховик Adidas Originals Puffer Jacket (чорний)</div>
+                        <div class="price">6200 грн</div>
+                        <div class="sizes">S, M, L</div>
+                    </div>
+                </div>
+                <div class="product-card">
+                    <img src="assets/puffer_adidas_green.webp" alt="Пуховик Adidas Monogram (зелений)">
+                    <div class="info">
+                        <div class="name">Пуховик Adidas Monogram (зелений)</div>
+                        <div class="price">6800 грн</div>
+                        <div class="sizes">S, M, L</div>
+                    </div>
+                </div>
+                <div class="product-card">
+                    <img src="assets/puffer_adidas_grey.webp" alt="Пуховик Adidas Originals 3 in 1 (сіро-чорний)">
+                    <div class="info">
+                        <div class="name">Пуховик Adidas Originals 3 in 1 (сіро-чорний)</div>
+                        <div class="price">6800 грн</div>
+                        <div class="sizes">S, M, L</div>
+                    </div>
+                </div>
+                <div class="product-card">
+                    <img src="assets/puffer_nike_primaloft_black.webp" alt="Пуховик Nike Primaloft (чорний)">
+                    <div class="info">
+                        <div class="name">Пуховик Nike Primaloft (чорний)</div>
+                        <div class="price">8000 грн</div>
+                        <div class="sizes">S, L</div>
+                    </div>
+                </div>
+                <div class="product-card">
+                    <img src="assets/beanie_nike_grey.webp" alt="Шапка Nike Sportswear Fisherman Beanie (сіра)">
+                    <div class="info">
+                        <div class="name">Шапка Nike Sportswear Fisherman Beanie (сіра)</div>
+                        <div class="price">990 грн</div>
+                        <div class="sizes">One Size</div>
+                    </div>
+                </div>
+                <div class="product-card">
+                    <img src="assets/backpack_jordan_lightblue.jpg" alt="Рюкзак Jordan Monogram Light Blue">
+                    <div class="info">
+                        <div class="name">Рюкзак Jordan Monogram Light Blue</div>
+                        <div class="price">5500 грн</div>
+                        <div class="sizes">One Size</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <button class="cta-btn" id="startBtn">Отримати подарунок</button>
+
+        <!-- Instagram CTA on the start screen -->
+        <div class="instagram-cta" style="color: #ffffff;">
+            <a href="https://www.instagram.com/modni.flow/" target="_blank" rel="noopener">
+                <!-- Inline Instagram icon -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M8 0C5.829 0 5.556.01 4.703.048 3.85.088 3.269.222 2.76.42a3.9 3.9 0 0 0-1.417.923A3.9 3.9 0 0 0 .42 2.76C.222 3.268.087 3.85.048 4.7.01 5.555 0 5.827 0 8.001c0 2.172.01 2.444.048 3.297.04.852.174 1.433.372 1.942.205.526.478.972.923 1.417.444.445.89.719 1.416.923.51.198 1.09.333 1.942.372C5.555 15.99 5.827 16 8 16s2.444-.01 3.298-.048c.851-.04 1.434-.174 1.943-.372a3.9 3.9 0 0 0 1.416-.923c.445-.445.718-.891.923-1.417.197-.509.332-1.09.372-1.942C15.99 10.445 16 10.173 16 8s-.01-2.445-.048-3.299c-.04-.851-.175-1.433-.372-1.941a3.9 3.9 0 0 0-.923-1.417A3.9 3.9 0 0 0 13.24.42c-.51-.198-1.092-.333-1.943-.372C10.443.01 10.172 0 7.998 0zm-.717 1.442h.718c2.136 0 2.389.007 3.232.046.78.035 1.204.166 1.486.275.373.145.64.319.92.599s.453.546.598.92c.11.281.24.705.275 1.485.039.843.047 1.096.047 3.231s-.008 2.389-.047 3.232c-.035.78-.166 1.203-.275 1.485a2.5 2.5 0 0 1-.599.919c-.28.28-.546.453-.92.598-.28.11-.704.24-1.485.276-.843.038-1.096.047-3.232.047s-2.39-.009-3.233-.047c-.78-.036-1.203-.166-1.485-.276a2.5 2.5 0 0 1-.92-.598 2.5 2.5 0 0 1-.6-.92c-.109-.281-.24-.705-.275-1.485-.038-.843-.046-1.096-.046-3.233s.008-2.388.046-3.231c.036-.78.166-1.204.276-1.486.145-.373.319-.64.599-.92s.546-.453.92-.598c.282-.11.705-.24 1.485-.276.738-.034 1.024-.044 2.515-.045zm4.988 1.328a.96.96 0 1 0 0 1.92.96.96 0 0 0 0-1.92m-4.27 1.122a4.109 4.109 0 1 0 0 8.217 4.109 4.109 0 0 0 0-8.217m0 1.441a2.667 2.667 0 1 1 0 5.334 2.667 2.667 0 0 1 0-5.334"/>
+                </svg>
+                <span>Солідкуйте за нами в інстаграмі</span>
+            </a>
+        </div>
+
+    </div>
+
+    <!-- Wheel screen with the spinning wheel -->
+    <div class="wheel-screen gradient-bg" id="wheelScreen">
+        <header>
+            <img src="assets/logo.png" alt="Modni Flow Logo">
+        </header>
+        <main>
+            <div class="wheel-container">
+                <div class="wheel" id="wheel">
+                    <!-- Percent discount segments use % symbol instead of an image -->
+                    <div class="prize-icon icon1">%</div>
+                    <div class="prize-icon icon2">%</div>
+                    <div class="prize-icon icon3">%</div>
+                    <!-- Free delivery -->
+                    <img src="assets/truck.png" class="prize-icon icon4" alt="Безкоштовна доставка">
+                    <!-- Sweet bonus -->
+                    <img src="assets/candy.png" class="prize-icon icon5" alt="Солодкий бонус">
+                    <!-- Hat discount icon shows an emoji -->
+                    <div class="prize-icon icon6">🧢</div>
+                </div>
+                <div class="pointer"></div>
+            </div>
+            <button class="spin-btn" id="spinBtn">Крутити!</button>
+        </main>
+    </div>
+
+    <!-- Result modal displayed after spin -->
+    <div class="result" id="result">
+        <div class="message">
+            <img src="" id="resultIcon" alt="">
+            <p id="resultText"></p>
+            <p id="resultNote"></p>
+            <!-- Instagram call to action inside result overlay -->
+            <div class="instagram-cta" style="color: #673ab7;">
+                <a href="https://www.instagram.com/modni.flow/" target="_blank" rel="noopener">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M8 0C5.829 0 5.556.01 4.703.048 3.85.088 3.269.222 2.76.42a3.9 3.9 0 0 0-1.417.923A3.9 3.9 0 0 0 .42 2.76C.222 3.268.087 3.85.048 4.7.01 5.555 0 5.827 0 8.001c0 2.172.01 2.444.048 3.297.04.852.174 1.433.372 1.942.205.526.478.972.923 1.417.444.445.89.719 1.416.923.51.198 1.09.333 1.942.372C5.555 15.99 5.827 16 8 16s2.444-.01 3.298-.048c.851-.04 1.434-.174 1.943-.372a3.9 3.9 0 0 0 1.416-.923c.445-.445.718-.891.923-1.417.197-.509.332-1.09.372-1.942C15.99 10.445 16 10.173 16 8s-.01-2.445-.048-3.299c-.04-.851-.175-1.433-.372-1.941a3.9 3.9 0 0 0-.923-1.417A3.9 3.9 0 0 0 13.24.42c-.51-.198-1.092-.333-1.943-.372C10.443.01 10.172 0 7.998 0zm-.717 1.442h.718c2.136 0 2.389.007 3.232.046.78.035 1.204.166 1.486.275.373.145.64.319.92.599s.453.546.598.92c.11.281.24.705.275 1.485.039.843.047 1.096.047 3.231s-.008 2.389-.047 3.232c-.035.78-.166 1.203-.275 1.485a2.5 2.5 0 0 1-.599.919c-.28.28-.546.453-.92.598-.28.11-.704.24-1.485.276-.843.038-1.096.047-3.232.047s-2.39-.009-3.233-.047c-.78-.036-1.203-.166-1.485-.276a2.5 2.5 0 0 1-.92-.598 2.5 2.5 0 0 1-.6-.92c-.109-.281-.24-.705-.275-1.485-.038-.843-.046-1.096-.046-3.233s.008-2.388.046-3.231c.036-.78.166-1.204.276-1.486.145-.373.319-.64.599-.92s.546-.453.92-.598c.282-.11.705-.24 1.485-.276.738-.034 1.024-.044 2.515-.045zm4.988 1.328a.96.96 0 1 0 0 1.92.96.96 0 0 0 0-1.92m-4.27 1.122a4.109 4.109 0 1 0 0 8.217 4.109 4.109 0 0 0 0-8.217m0 1.441a2.667 2.667 0 1 1 0 5.334 2.667 2.667 0 0 1 0-5.334" />
+                    </svg>
+                    <span>Солідкуйте за нами в інстаграмі</span>
+                </a>
+            </div>
+
+            <button class="close-btn" id="closeBtn">Закрити</button>
+        </div>
+    </div>
+
+    <script>
+        // Toggle between start screen and wheel screen
+        const startBtn = document.getElementById('startBtn');
+        const startScreen = document.getElementById('startScreen');
+        const wheelScreen = document.getElementById('wheelScreen');
+        startBtn.addEventListener('click', () => {
+            startScreen.style.display = 'none';
+            wheelScreen.style.display = 'flex';
+        });
+
+        // Define the prizes and their corresponding assets and messages
+        const prizes = [
+            {
+                text: '5% знижки',
+                icon: 'gift.png',
+                note: 'Вітаємо Вас зі наступаючими святами!\nБудь ласка, заскріньте цей екран та надішліть нам, щоб отримати цей подарунок😁'
+            },
+            {
+                text: '7% знижки',
+                icon: 'gift.png',
+                note: 'Вітаємо Вас зі наступаючими святами!\nБудь ласка, заскріньте цей екран та надішліть нам, щоб отримати цей подарунок😁'
+            },
+            {
+                text: '10% знижки',
+                icon: 'gift.png',
+                note: 'Вітаємо Вас зі наступаючими святами!\nБудь ласка, заскріньте цей екран та надішліть нам, щоб отримати цей подарунок😁'
+            },
+            {
+                text: 'Безкоштовна доставка',
+                icon: 'truck.png',
+                note: 'Вітаємо Вас зі наступаючими святами!\nБудь ласка, заскріньте цей екран та надішліть нам, щоб отримати цей подарунок😁'
+            },
+            {
+                text: 'Солодкий бонус',
+                icon: 'candy.png',
+                note: 'Вітаємо Вас зі наступаючими святами!\nБудь ласка, заскріньте цей екран та надішліть нам, щоб отримати цей подарунок😁'
+            },
+            {
+                text: '-50% на шапку при купівлі куртки',
+                icon: 'gift.png',
+                note: 'При покупці куртки Ви отримуєте -50% на будь-яку шапку з асортименту, тому що голову потрібно тримати в теплі!\nВітаємо Вас зі наступаючими святами! Будь ласка, заскріньте цей екран та надішліть нам, щоб отримати цей подарунок😁'
+            }
+        ];
+
+        const wheel = document.getElementById('wheel');
+        const spinBtn = document.getElementById('spinBtn');
+        const result = document.getElementById('result');
+        const resultIcon = document.getElementById('resultIcon');
+        const resultText = document.getElementById('resultText');
+        const resultNote = document.getElementById('resultNote');
+        const closeBtn = document.getElementById('closeBtn');
+
+        let rotating = false;
+        let currentRotation = 0;
+
+        function spinWheel() {
+            if (rotating) return;
+            rotating = true;
+            // Randomly choose a prize index. Multiplying by a large number and taking
+            // the modulus improves distribution in some runtimes where Math.random()
+            // may return repeating sequences when directly scaled by a small integer.
+            const randomLarge = Math.floor(Math.random() * 1000000);
+            const prizeIndex = randomLarge % prizes.length;
+            // Calculate rotation: each segment is equal sized (360/prizes.length)
+            const segmentAngle = 360 / prizes.length;
+            const centerAngle = (prizeIndex * segmentAngle) + (segmentAngle / 2);
+            // Rotate so that the selected segment's centre aligns with the pointer's location.
+            // In our design the wheel is initially rotated 90° so that the boundary between
+            // the purple and red segments sits at the very top of the circle. This means the
+            // pointer’s physical location at the top corresponds to the 0° angle of the
+            // conic gradient (pointing to the right in CSS coordinate space). Setting
+            // pointerAngle to 0° ensures the centre of the selected segment aligns
+            // perfectly underneath the pointer after each spin.
+            const pointerAngle = 0;
+            // Determine the current rotation modulo 360 so we can offset the next spin relative to
+            // the wheel’s current orientation. Without this correction, sequential spins accumulate
+            // rotations and misalign the pointer and prize positions.
+            const currentNormalized = ((currentRotation % 360) + 360) % 360;
+            // Compute the rotation needed so that after rotation, the segment's centre angle plus
+            // current rotation aligns with the pointer angle. Add multiples of 360 to create a
+            // full‑spin animation effect.
+            const targetAngle = (360 * 5) + pointerAngle - centerAngle - currentNormalized;
+            currentRotation += targetAngle;
+            wheel.style.transform = `rotate(${currentRotation}deg)`;
+            // After rotation finishes, display the result
+            setTimeout(() => {
+                const prize = prizes[prizeIndex];
+                resultIcon.src = `assets/${prize.icon}`;
+                resultIcon.alt = prize.text;
+                resultText.textContent = prize.text;
+                // assign the prize note directly; newline characters inside the note will be preserved
+                resultNote.textContent = prize.note;
+                result.classList.add('visible');
+                rotating = false;
+            }, 5200);
+        }
+
+        spinBtn.addEventListener('click', spinWheel);
+        closeBtn.addEventListener('click', () => {
+            result.classList.remove('visible');
+        });
+    </script>
+</body>
+</html>
